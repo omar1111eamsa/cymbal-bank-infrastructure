@@ -1,0 +1,13 @@
+{
+  "terraform.languageServer.enable": true,
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.quickSuggestions": {
+      "comments": false,
+      "strings": true,
+      "other": true
+    },
+    "editor.suggestOnTriggerCharacters": true
+  }
+}
