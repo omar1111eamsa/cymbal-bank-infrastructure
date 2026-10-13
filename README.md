@@ -1,2 +1,3 @@
-# cymbal-bank-infrastructure
-Cloud-native EKS infrastructure with Cilium and Istio Ambient Mesh deployed via Terraform and HCP.
+# Cymbal Bank Infrastructure
+
+Zero-trust, cloud-native banking microservices platform deployed on AWS EKS using Terraform, HCP Terraform, Cilium (eBPF), and Istio Ambient Mesh.
