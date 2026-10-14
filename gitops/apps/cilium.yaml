@@ -18,6 +18,11 @@ spec:
         egressMasqueradeInterfaces: eth0
         routingMode: native
         kubeProxyReplacement: true
+        hubble:
+          relay:
+            enabled: true
+          ui:
+            enabled: true
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
