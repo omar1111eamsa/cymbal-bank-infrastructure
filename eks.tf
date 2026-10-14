@@ -19,6 +19,21 @@ module "eks" {
     node_role_arn = aws_iam_role.eks_auto_node_role.arn
   }
 
+  access_entries = {
+    local_admin = {
+      principal_arn = "arn:aws:iam::612062119472:root"
+
+      policy_associations = {
+        cluster_admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
 
 
 }
