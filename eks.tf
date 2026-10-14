@@ -13,8 +13,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     core_nodes = {
-      ami_type = "AL2023_x86_64_STANDARD"
-      # FIX: Using the powerful m7i-flex.large covered by the new Free Tier
+      ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["m7i-flex.large"]
 
       min_size     = 2
