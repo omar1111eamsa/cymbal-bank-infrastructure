@@ -11,7 +11,7 @@ spec:
     path: gitops/policies
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: default
+    namespace: cymbal-bank
   syncPolicy:
     automated:
       prune: true
