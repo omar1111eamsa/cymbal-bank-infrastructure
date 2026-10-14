@@ -8,5 +8,5 @@ resource "helm_release" "argocd" {
 
 
 
-  depends_on = [module.eks]
+  depends_on = [module.eks_cluster]
 }
