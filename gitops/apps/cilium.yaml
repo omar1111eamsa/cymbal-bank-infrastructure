@@ -30,3 +30,5 @@ spec:
       kind: DaemonSet
       jqPathExpressions:
         - .spec.template.spec.securityContext.appArmorProfile
+        - .spec.template.spec.containers[].volumeMounts[].readOnly
+        - .spec.template.spec.initContainers[].volumeMounts[].readOnly
