@@ -17,6 +17,7 @@ terraform.rc
 # Variable definitions with secrets
 *.tfvars
 *.tfvars.json
+.vscode
 
 # CLI plan files
 *.tfplan
