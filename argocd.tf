@@ -7,10 +7,6 @@ resource "helm_release" "argocd" {
   create_namespace = true
 
 
-  set {
-    name  = "server.service.type"
-    value = "ClusterIP"
-  }
 
   depends_on = [module.eks]
 }
