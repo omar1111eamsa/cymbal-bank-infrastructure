@@ -8,9 +8,7 @@ spec:
   source:
     repoURL: "https://github.com/omar1111eamsa/cymbal-bank-infrastructure.git"
     targetRevision: main
-    path: gitops
-    directory:
-      recurse: true
+    path: gitops/apps
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd

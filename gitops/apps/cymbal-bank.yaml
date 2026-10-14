@@ -6,4 +6,15 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "https://github.com/omar111eamsa/cymbal-bank-infrastructure"
+    repoURL: "https://github.com/omar1111eamsa/cymbal-bank-manifests.git"
+    targetRevision: main
+    path: .
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: cymbal-bank
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

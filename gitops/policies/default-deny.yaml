@@ -4,7 +4,7 @@ metadata:
   name: default-deny-all
   namespace: cymbal-bank
 spec:
-  description: "Default deny all ingress and egress, allow onlu DNS out"
+  description: "Default deny all ingress and egress, allow only DNS out"
   endpointSelector:
     matchLabels: {}
   ingress: []
@@ -13,7 +13,6 @@ spec:
         - matchLabels:
             "k8s:io.kubernetes.pod.namespace": kube-system
             "k8s:k8s-app": kube-dns
-
       toPorts:
         - ports:
             - port: "53"
