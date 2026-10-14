@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://helm.cilium.io/"
+    targetRevision: 1.16.1
+    chart: cilium
+    helm:
+      values: |
+        eni:
+          enabled: true
+        ipam:
+          mode: eni
+        egressMasqueradeInterfaces: eth0
+        routingMode: native
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
