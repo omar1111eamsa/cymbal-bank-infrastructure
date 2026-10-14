@@ -16,7 +16,7 @@ module "vpc" {
   enable_dns_support   = true
 
   private_subnet_tags = {
-    "karpenter.sh/discovery" = "cymbal-bank-cluster"
+    "karpenter.sh/discovery" = "cymbal-bank-standard"
   }
 
 }
