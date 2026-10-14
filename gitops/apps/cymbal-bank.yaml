@@ -1,0 +1,9 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cymbal-bank
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoUrl: "https://github.com/omar111eamsa/cymbal-bank-infrastructure"
