@@ -12,17 +12,16 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_groups = {
-    code_nodes = {
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["t3.micro", "t3.small", "t4g.micro", "t4g.small", "c7i-flex.large", "m7i-flex.large"]
+    core_nodes = {
+      ami_type = "AL2023_x86_64_STANDARD"
+      # FIX: Using the powerful m7i-flex.large covered by the new Free Tier
+      instance_types = ["m7i-flex.large"]
 
       min_size     = 2
       max_size     = 4
       desired_size = 2
     }
   }
-
-
 
   access_entries = {
     local_admin = {
@@ -38,25 +37,4 @@ module "eks" {
       }
     }
   }
-
-
-
-}
-
-
-
-resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks_auto_node_role.name
-}
-
-
-resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.eks_auto_node_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_ecr_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks_auto_node_role.name
 }
