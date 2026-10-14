@@ -8,15 +8,21 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  cluster_endpoint_public_access = true
-
+  cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
-  cluster_compute_config = {
-    enabled       = true
-    node_pools    = ["general-purpose"]
-    node_role_arn = aws_iam_role.eks_auto_node_role.arn
+  eks_managed_node_groups = {
+    code_nodes = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["t3.micro", "t3.small", "t4g.micro", "t4g.small", "c7i-flex.large", "m7i-flex.large"]
+
+      min_size     = 2
+      max_size     = 4
+      desired_size = 2
+    }
   }
+
+
 
   access_entries = {
     local_admin = {
@@ -37,23 +43,7 @@ module "eks" {
 
 }
 
-resource "aws_iam_role" "eks_auto_node_role" {
-  name = "eks-auto-node-role"
-  assume_role_policy = jsonencode(
-    {
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Effect" : "Allow",
-          "Principal" : {
-            "Service" : "ec2.amazonaws.com"
-          },
-          "Action" : "sts:AssumeRole"
-        }
-      ]
-    }
-  )
-}
+
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
