@@ -17,6 +17,7 @@ spec:
           mode: eni
         egressMasqueradeInterfaces: eth0
         routingMode: native
+        kubeProxyReplacement: true
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
