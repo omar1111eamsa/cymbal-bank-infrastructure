@@ -22,6 +22,8 @@ resource "helm_release" "aws_load_balancer_controller" {
   values = [
     yamlencode({
       clusterName = module.eks_cluster.cluster_name
+      vpcId       = module.vpc.vpc_id
+      region      = "eu-west-1"
       serviceAccount = {
         create = true
         name   = "aws-load-balancer-controller"
