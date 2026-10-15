@@ -1,0 +1,18 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: internal-backend-communication
+  namespace: cymbal-bank
+spec:
+  description: "Allow microservices to communicate with each other"
+  endpointSelector:
+    matchLabels:
+      application: bank-of-anthos
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            application: bank-of-anthos
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            application: bank-of-anthos
