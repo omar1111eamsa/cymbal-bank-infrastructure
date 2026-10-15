@@ -1,0 +1,59 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: database-ingress
+  namespace: cymbal-bank
+spec:
+  description: "Allow databases to receive connections on port 5432"
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["ledger-db", "accounts-db"]
+  ingress:
+    - fromEndpoints:
+        - matchExpressions:
+            key: app
+            operator: In
+            values:
+              [
+                "balancereader",
+                "ledgerwriter",
+                "transactionhistory",
+                "userservice",
+                "contacts",
+              ]
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: database-egress
+  namespace: cymbal-bank
+spec:
+  description: "Allow microservices to send traffic to databases on port 5432"
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          [
+            "balancereader",
+            "ledgerwriter",
+            "transactionhistory",
+            "userservice",
+            "contacts",
+          ]
+  egress:
+    - toEndpoints:
+        - matchExpressions:
+            key: app
+            operator: In
+            values: ["ledger-db", "accounts-db"]
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
