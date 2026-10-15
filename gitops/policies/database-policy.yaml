@@ -13,16 +13,16 @@ spec:
   ingress:
     - fromEndpoints:
         - matchExpressions:
-            key: app
-            operator: In
-            values:
-              [
-                "balancereader",
-                "ledgerwriter",
-                "transactionhistory",
-                "userservice",
-                "contacts",
-              ]
+            - key: app
+              operator: In
+              values:
+                [
+                  "balancereader",
+                  "ledgerwriter",
+                  "transactionhistory",
+                  "userservice",
+                  "contacts",
+                ]
       toPorts:
         - ports:
             - port: "5432"
@@ -50,9 +50,9 @@ spec:
   egress:
     - toEndpoints:
         - matchExpressions:
-            key: app
-            operator: In
-            values: ["ledger-db", "accounts-db"]
+            - key: app
+              operator: In
+              values: ["ledger-db", "accounts-db"]
       toPorts:
         - ports:
             - port: "5432"
