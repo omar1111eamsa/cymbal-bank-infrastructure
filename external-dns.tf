@@ -8,8 +8,11 @@ module "external_dns_irsa_role" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks_cluster.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:external-dns"]
+      provider_arn = module.eks_cluster.oidc_provider_arn
+      namespace_service_accounts = [
+        "kube-system:external-dns",
+        "external-dns:external-dns",
+      ]
     }
   }
 }
