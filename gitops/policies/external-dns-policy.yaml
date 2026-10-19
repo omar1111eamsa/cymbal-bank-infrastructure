@@ -24,7 +24,8 @@ spec:
     - toEntities:
         - kube-apiserver
     - toFQDNs:
-        - matchPattern: "*.amazonaws.com"
+        - matchName: sts.eu-west-1.amazonaws.com
+        - matchName: route53.amazonaws.com
       toPorts:
         - ports:
             - port: "443"
