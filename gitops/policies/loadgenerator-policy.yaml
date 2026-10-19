@@ -11,7 +11,7 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-          app: frontend
+            app: frontend
       toPorts:
         - ports:
             - port: "8080"
