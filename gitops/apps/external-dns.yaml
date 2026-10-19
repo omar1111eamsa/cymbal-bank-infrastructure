@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://kubernetes-sigs.github.io/external-dns/"
+    chart: external-dns
+    targetRevision: 1.23.0
+    helm:
+      releaseName: external-dns
+      values: |
+        provider:
+          name: aws
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: eu-west-1
+        domainFilters:
+          - o.serghini.me
+        policy: sync
+        registry: txt
+        txtOwnerId: cymbal-bank-mesh
+        sources:
+          - ingress
+        serviceAccount:
+          create: true
+          name: external-dns
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::612062119472:role/external-dns
+        resources:                                   # ←
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
