@@ -30,7 +30,7 @@ resource "aws_route53_record" "bank_cert_validation" {
 resource "aws_acm_certificate_validation" "bank" {
   certificate_arn = aws_acm_certificate.bank.arn
   validation_record_fqdns = [
-    for r in aws_aws_route53_record.bank_cert_validation : r.fqdn
+    for r in aws_route53_record.bank_cert_validation : r.fqdn
   ]
 }
 
