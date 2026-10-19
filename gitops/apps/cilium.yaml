@@ -15,7 +15,7 @@ spec:
           enabled: true
         ipam:
           mode: eni
-        egressMasqueradeInterfaces: eth0
+        egressMasqueradeInterfaces: "en+"
         routingMode: native
         kubeProxyReplacement: true
         hubble:
