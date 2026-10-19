@@ -9,10 +9,8 @@ spec:
     matchLabels:
       app: frontend
   ingress:
-    - fromEntities:
-        - world
-        - host
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
+    - fromEndpoints:
+        - matchExpressions:
+            - key: app
+              operator: In
+              values: ["loadgenerator"]
