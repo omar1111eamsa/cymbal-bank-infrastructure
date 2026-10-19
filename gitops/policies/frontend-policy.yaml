@@ -4,13 +4,21 @@ metadata:
   name: frontend-ingress
   namespace: cymbal-bank
 spec:
-  description: "Allow external and host traffic to reach the frontend"
+  description: "Allow ALB (world) and loadgenerator to reach the frontend"
   endpointSelector:
     matchLabels:
       app: frontend
   ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
     - fromEndpoints:
-        - matchExpressions:
-            - key: app
-              operator: In
-              values: ["loadgenerator"]
+        - matchLabels:
+            app: loadgenerator
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

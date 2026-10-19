@@ -1,19 +1,17 @@
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:
-  name: frontend-ingress
+  name: loadgenerator-egress
   namespace: cymbal-bank
 spec:
-  description: "Allow external and host traffic to reach the frontend"
+  description: "Allow loadgenerator to call the frontend"
   endpointSelector:
     matchLabels:
-      app: frontend
-  ingress:
-    - fromEndpoints:
-        - matchExpressions:
-            - key: app
-              operator: In
-              values: ["loadgenerator"]
+      app: loadgenerator
+  egress:
+    - toEndpoints:
+        - matchLabels:
+          app: frontend
       toPorts:
         - ports:
             - port: "8080"
