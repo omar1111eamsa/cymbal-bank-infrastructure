@@ -9,8 +9,10 @@ spec:
     matchLabels:
       app: frontend
   ingress:
-    - fromEntities:
-        - world
+    - fromCIDR:
+        - 10.10.101.0/24
+        - 10.10.102.0/24
+        - 10.10.103.0/24
       toPorts:
         - ports:
             - port: "8080"
