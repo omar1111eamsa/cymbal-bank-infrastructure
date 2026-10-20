@@ -12,4 +12,3 @@ module "load_balancer_controller_irsa_role" {
     }
   }
 }
-
