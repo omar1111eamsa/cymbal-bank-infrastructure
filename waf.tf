@@ -1,6 +1,6 @@
 locals {
   # true = log only (observe). Switch to false to start blocking.
-  waf_count_mode = true
+  waf_count_mode = false
 
   waf_managed_rule_groups = {
     "AWSManagedRulesAmazonIpReputationList" = 10
