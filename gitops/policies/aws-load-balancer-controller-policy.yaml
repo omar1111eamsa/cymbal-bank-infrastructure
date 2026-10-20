@@ -1,0 +1,42 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: aws-load-balancer-controller
+  namespace: aws-load-balancer-controller
+spec:
+  description: "ALB controller: webhook from API server only; egress to DNS, API server and required AWS APIs"
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: aws-load-balancer-controller
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": kube-system
+            "k8s:k8s-app": kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toEntities:
+        - kube-apiserver
+    - toFQDNs:
+        - matchName: sts.eu-west-1.amazonaws.com
+        - matchName: elasticloadbalancing.eu-west-1.amazonaws.com
+        - matchName: ec2.eu-west-1.amazonaws.com
+        - matchName: tagging.eu-west-1.amazonaws.com
+        - matchName: wafv2.eu-west-1.amazonaws.com
+        - matchName: shield.us-east-1.amazonaws.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
