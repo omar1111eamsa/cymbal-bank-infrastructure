@@ -15,6 +15,7 @@ spec:
         clusterName: cymbal-bank-mesh
         region: eu-west-1
         vpcId: vpc-04d0d51d8d0f22f88
+        enableCertManager: true
         replicaCount: 2
         serviceAccount:
           create: true
@@ -37,19 +38,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - RespectIgnoreDifferences=true
-  ignoreDifferences:
-    - kind: Secret
-      name: aws-load-balancer-tls
-      jsonPointers:
-        - /data
-    - group: admissionregistration.k8s.io
-      kind: MutatingWebhookConfiguration
-      name: aws-load-balancer-webhook
-      jqPathExpressions:
-        - .webhooks[].clientConfig.caBundle
-    - group: admissionregistration.k8s.io
-      kind: ValidatingWebhookConfiguration
-      name: aws-load-balancer-webhook
-      jqPathExpressions:
-        - .webhooks[].clientConfig.caBundle
