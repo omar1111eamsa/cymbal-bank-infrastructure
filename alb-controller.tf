@@ -14,24 +14,3 @@ module "load_balancer_controller_irsa_role" {
   }
 }
 
-resource "helm_release" "aws_load_balancer_controller" {
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  namespace  = "kube-system"
-
-  values = [
-    yamlencode({
-      clusterName = module.eks_cluster.cluster_name
-      vpcId       = module.vpc.vpc_id
-      region      = "eu-west-1"
-      serviceAccount = {
-        create = true
-        name   = "aws-load-balancer-controller"
-        annotations = {
-          "eks.amazonaws.com/role-arn" = module.load_balancer_controller_irsa_role.iam_role_arn
-        }
-      }
-    })
-  ]
-}

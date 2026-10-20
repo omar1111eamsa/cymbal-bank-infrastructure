@@ -3,7 +3,10 @@ import {
   id = "argocd/argocd"
 }
 
-import {
-  to = helm_release.aws_load_balancer_controller
-  id = "kube-system/aws-load-balancer-controller"
+removed {
+  from = helm_release.aws_load_balancer_controller
+
+  lifecycle {
+    destroy = false
+  }
 }
