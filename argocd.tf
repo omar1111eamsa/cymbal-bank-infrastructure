@@ -10,3 +10,9 @@ resource "helm_release" "argocd" {
 
   depends_on = [module.eks_cluster]
 }
+
+
+import {
+  to = helm_release.argocd
+  id = "argocd/argocd"
+}
