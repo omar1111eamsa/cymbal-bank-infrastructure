@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://prometheus-community.github.io/helm-charts"
+    chart: kube-prometheus-stack
+    targetRevision: 92.11.0
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        # EKS hides these control-plane parts and there is no kube-proxy (Cilium replaces it)
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+        kubeProxy:
+          enabled: false
+
+        prometheus:
+          prometheusSpec:
+            retention: 15d
+            retentionSize: 18GB
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            resources:
+              requests:
+                cpu: 200m
+                memory: 1Gi
+              limits:
+                memory: 2Gi
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: gp3
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 20Gi
+
+        alertmanager:
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: gp3
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 2Gi
+
+        grafana:
+          persistence:
+            enabled: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
