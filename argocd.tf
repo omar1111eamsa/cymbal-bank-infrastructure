@@ -12,7 +12,3 @@ resource "helm_release" "argocd" {
 }
 
 
-import {
-  to = helm_release.argocd
-  id = "argocd/argocd"
-}
