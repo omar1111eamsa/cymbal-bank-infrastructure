@@ -12,6 +12,13 @@ module "eks_cluster" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
+  cluster_addons = {
+    aws-ebs-csi-driver = {
+      addon_version = "v1.67.1-eksbuild.1"
+      service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
+    }
+  }
+
   eks_managed_node_groups = {
     core_nodes = {
       ami_type       = "AL2023_x86_64_STANDARD"
