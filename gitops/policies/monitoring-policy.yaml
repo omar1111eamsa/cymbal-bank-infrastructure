@@ -71,6 +71,19 @@ spec:
         - ports:
             - port: "9153"         # CoreDNS metrics
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": argocd
+      toPorts:
+        - ports:
+            - port: "8080"         # applicationset-controller
+              protocol: TCP
+            - port: "8082"         # application-controller
+              protocol: TCP
+            - port: "8083"         # server
+              protocol: TCP
+            - port: "8084"         # repo-server
+              protocol: TCP
 ---
 # 3. Grafana: talks only to Prometheus, Alertmanager and the API server
 apiVersion: "cilium.io/v2"
