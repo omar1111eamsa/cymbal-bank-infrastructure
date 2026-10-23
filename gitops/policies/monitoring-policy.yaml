@@ -140,6 +140,13 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
+  egress:
+    - toFQDNs:
+        - matchName: hooks.slack.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
 ---
 # 5. Operator + kube-state-metrics: watch the API server; operator webhook from API server
 apiVersion: "cilium.io/v2"

@@ -45,7 +45,40 @@ spec:
                       storage: 20Gi
 
         alertmanager:
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              receiver: slack
+              group_by: [alertname, namespace]
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              routes:
+                - receiver: "null"
+                  matchers:
+                    - alertname =~ "Watchdog|InfoInhibitor"
+                - receiver: "null"
+                  matchers:
+                    - severity = "info"
+            inhibit_rules:
+              - source_matchers:
+                  - severity = "critical"
+                target_matchers:
+                  - severity = "warning"
+                equal: [alertname, namespace]
+            receivers:
+              - name: "null"
+              - name: slack
+                slack_configs:
+                  - api_url_file: /etc/alertmanager/secrets/alertmanager-slack/webhook-url
+                    channel: "#alerts"
+                    send_resolved: true
+                    title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})'
+                    text: '{{ range .Alerts }}• {{ .Annotations.summary }}{{ if .Annotations.description }} — {{ .Annotations.description }}{{ end }}{{ "\n" }}{{ end }}'
           alertmanagerSpec:
+            secrets:
+              - alertmanager-slack
             storage:
               volumeClaimTemplate:
                 spec:
@@ -59,7 +92,7 @@ spec:
           persistence:
             enabled: false
           resources:
-            requests:
+            requests:(())
               cpu: 50m
               memory: 256Mi
             limits:
