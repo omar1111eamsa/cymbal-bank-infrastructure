@@ -84,6 +84,13 @@ spec:
               protocol: TCP
             - port: "8084"         # repo-server
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": external-secrets
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
 ---
 # 3. Grafana: talks only to Prometheus, Alertmanager and the API server
 apiVersion: "cilium.io/v2"
