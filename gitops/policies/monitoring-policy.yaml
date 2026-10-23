@@ -55,6 +55,12 @@ spec:
               protocol: TCP
             - port: "9100"         # node-exporter (host network)
               protocol: TCP
+            - port: "9962"         # cilium-agent
+              protocol: TCP
+            - port: "9963"         # cilium-operator
+              protocol: TCP
+            - port: "9965"         # hubble metrics
+              protocol: TCP
     - toEntities:
         - kube-apiserver
     - toEndpoints:
