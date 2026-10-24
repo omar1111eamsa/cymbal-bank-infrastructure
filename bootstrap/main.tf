@@ -87,3 +87,19 @@ resource "tfe_variable" "aws_run_role_arn" {
   key          = "TFC_AWS_RUN_ROLE_ARN"
   value        = aws_iam_role.hcp_terraform.arn
 }
+
+
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
+  ephemeral = true
+}
+
+resource "tfe_variable" "cloudflare_api_token" {
+  workspace_id     = tfe_workspace.prod.id
+  category         = "env"
+  key              = "CLOUDFLARE_API_TOKEN"
+  sensitive        = true
+  value_wo         = var.cloudflare_api_token
+  value_wo_version = 1
+}

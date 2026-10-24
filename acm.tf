@@ -1,6 +1,4 @@
-data "aws_route53_zone" "main" {
-  name = "o.serghini.me"
-}
+
 
 resource "aws_acm_certificate" "bank" {
   domain_name       = "bank.o.serghini.me"
@@ -20,7 +18,7 @@ resource "aws_route53_record" "bank_cert_validation" {
       record = dvo.resource_record_value
     }
   }
-  zone_id = data.aws_route53_zone.main.zone_id
+  zone_id = aws_route53_zone.main.zone_id
   name    = each.value.name
   type    = each.value.type
   records = [each.value.record]
@@ -32,6 +30,7 @@ resource "aws_acm_certificate_validation" "bank" {
   validation_record_fqdns = [
     for r in aws_route53_record.bank_cert_validation : r.fqdn
   ]
+  depends_on = [cloudflare_dns_record.o_delegation]
 }
 
 output "bank_certificate_arn" {
