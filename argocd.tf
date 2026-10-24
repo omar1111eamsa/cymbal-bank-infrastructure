@@ -10,18 +10,10 @@ resource "helm_release" "argocd" {
 
   depends_on = [aws_eks_addon.coredns]
   values = [yamlencode({
-    controller = {
-      metrics = { enabled = true, serviceMonitor = { enabled = true } }
-    }
-    server = {
-      metrics = { enabled = true, serviceMonitor = { enabled = true } }
-    }
-    repoServer = {
-      metrics = { enabled = true, serviceMonitor = { enabled = true } }
-    }
-    applicationSet = {
-      metrics = { enabled = true, serviceMonitor = { enabled = true } }
-    }
+    controller     = { metrics = { enabled = true } }
+    server         = { metrics = { enabled = true } }
+    repoServer     = { metrics = { enabled = true } }
+    applicationSet = { metrics = { enabled = true } }
   })]
 }
 

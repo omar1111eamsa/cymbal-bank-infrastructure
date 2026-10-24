@@ -35,6 +35,7 @@ spec:
         - matchName: tagging.eu-west-1.amazonaws.com
         - matchName: wafv2.eu-west-1.amazonaws.com
         - matchName: shield.us-east-1.amazonaws.com
+        - matchName: acm.eu-west-1.amazonaws.com
       toPorts:
         - ports:
             - port: "443"

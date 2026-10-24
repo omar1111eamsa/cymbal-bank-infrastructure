@@ -43,6 +43,42 @@ spec:
                   resources:
                     requests:
                       storage: 20Gi
+          additionalServiceMonitors:
+            - name: argocd
+              namespaceSelector:
+                matchNames: [argocd]
+              selector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: [argocd-metrics, argocd-server-metrics, argocd-repo-server-metrics]
+              endpoints:
+                - port: http-metrics
+            - name: hubble
+              namespaceSelector:
+                matchNames: [kube-system]
+              selector:
+                matchLabels:
+                  k8s-app: hubble
+              endpoints:
+                - port: hubble-metrics
+          additionalPodMonitors:
+            - name: cilium-agent
+              namespaceSelector:
+                matchNames: [kube-system]
+              selector:
+                matchLabels:
+                  k8s-app: cilium
+              podMetricsEndpoints:
+                - port: prometheus
+            - name: cilium-operator
+              namespaceSelector:
+                matchNames: [kube-system]
+              selector:
+                matchLabels:
+                  io.cilium/app: operator
+              podMetricsEndpoints:
+                - port: prometheus
 
         alertmanager:
           config:
@@ -104,6 +140,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true

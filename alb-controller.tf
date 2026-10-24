@@ -4,6 +4,14 @@ module "aws_lb_controller_pod_identity" {
 
   name                            = "aws-load-balancer-controller"
   attach_aws_lb_controller_policy = true
+  attach_custom_policy            = true
+  policy_statements = [
+    {
+      sid       = "WafLookupByName"
+      actions   = ["wafv2:ListWebACLs"]
+      resources = ["*"]
+    }
+  ]
 
   associations = {
     this = {
