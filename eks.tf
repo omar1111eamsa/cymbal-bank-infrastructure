@@ -2,7 +2,8 @@ module "eks_cluster" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name = "cymbal-bank-mesh"
+  cluster_name    = "cymbal-bank-mesh"
+  cluster_version = "1.36"
 
 
 
@@ -32,7 +33,7 @@ module "eks_cluster" {
 
   access_entries = {
     local_admin = {
-      principal_arn = "arn:aws:iam::612062119472:root"
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
 
       policy_associations = {
         cluster_admin = {
