@@ -2,8 +2,9 @@ module "eks_cluster" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "cymbal-bank-mesh"
-  cluster_version = "1.36"
+  cluster_name                  = "cymbal-bank-mesh"
+  cluster_version               = "1.36"
+  bootstrap_self_managed_addons = false
 
 
 
@@ -14,10 +15,6 @@ module "eks_cluster" {
   enable_cluster_creator_admin_permissions = true
 
   cluster_addons = {
-    aws-ebs-csi-driver = {
-      addon_version            = "v1.67.1-eksbuild.1"
-      service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
-    }
     eks-pod-identity-agent = {
       addon_version = "v1.4.1-eksbuild.2"
     }
