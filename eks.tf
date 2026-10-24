@@ -18,6 +18,9 @@ module "eks_cluster" {
       addon_version            = "v1.67.1-eksbuild.1"
       service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
     }
+    eks-pod-identity-agent = {
+      addon_version = "v1.4.1-eksbuild.2"
+    }
   }
 
   eks_managed_node_groups = {

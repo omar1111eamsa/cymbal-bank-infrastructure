@@ -20,8 +20,6 @@ spec:
         serviceAccount:
           create: true
           name: aws-load-balancer-controller
-          annotations:
-            eks.amazonaws.com/role-arn: arn:aws:iam::612062119472:role/aws-load-balancer-controller
         resources:
           requests:
             cpu: 50m

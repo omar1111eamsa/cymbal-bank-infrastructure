@@ -27,8 +27,6 @@ spec:
         serviceAccount:
           create: true
           name: external-dns
-          annotations:
-            eks.amazonaws.com/role-arn: arn:aws:iam::612062119472:role/external-dns
         resources:                                   # ←
           requests:
             cpu: 10m
