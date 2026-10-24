@@ -1,5 +1,6 @@
-name: "Terrafrom CI/CD via HCP"
+name: "Build environment"
 
+# Build = push to main, or the "Run workflow" button (rebuild after a destroy, no commit needed)
 on:
   push:
     branches:
@@ -7,45 +8,92 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
+# Never build and destroy at the same time
+concurrency:
+  group: environment
+  cancel-in-progress: false
 
 env:
   TF_CLOUD_ORGANIZATION: "cymbal-bank-org"
   TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
-  TF_WORKSPACE: "cymbal-bank-prod"
 
 jobs:
-  terrafrom:
-    name: "Terrafrom Plan & Apply"
+  persistent:
+    name: "Persistent layer (DNS, certificate, secrets)"
     runs-on: ubuntu-latest
+    env:
+      TF_WORKSPACE: "cymbal-bank-persistent"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
-        id: apply-upload
+        id: upload
         with:
-          workspace: ${{env.TF_WORKSPACE}}
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ./persistent
+
+      - name: Create Plan Run
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        id: plan-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.upload.outputs.configuration_version_id }}
+          plan_only: true
+
+      - name: Create Apply Run
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        id: apply-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.upload.outputs.configuration_version_id }}
+
+      - name: Apply
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+        with:
+          run: ${{ steps.apply-run.outputs.run_id }}
+          comment: "Apply Run via GitHub Actions (${{ github.sha }})"
+
+  ephemeral:
+    name: "Environment (VPC, EKS, platform)"
+    needs: persistent
+    runs-on: ubuntu-latest
+    env:
+      TF_WORKSPACE: "cymbal-bank-prod"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+        id: upload
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
           directory: ./
 
       - name: Create Plan Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
         id: plan-run
         with:
-          workspace: ${{env.TF_WORKSPACE}}
-          configuration_version: ${{steps.apply-upload.outputs.configuration_version_id}}
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.upload.outputs.configuration_version_id }}
           plan_only: true
 
       - name: Create Apply Run
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
         id: apply-run
         with:
           workspace: ${{ env.TF_WORKSPACE }}
-          configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+          configuration_version: ${{ steps.upload.outputs.configuration_version_id }}
 
       - name: Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
         with:
           run: ${{ steps.apply-run.outputs.run_id }}

@@ -4,7 +4,7 @@ module "external_dns_pod_identity" {
 
   name                          = "external-dns"
   attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = [aws_route53_zone.main.arn]
+  external_dns_hosted_zone_arns = [data.aws_route53_zone.main.arn]
 
   associations = {
     this = {

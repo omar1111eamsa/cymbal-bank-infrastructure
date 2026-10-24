@@ -1,0 +1,123 @@
+name: "Destroy environment"
+
+# One click at the end of a session: Actions -> Destroy environment -> Run workflow -> type "destroy".
+# Only the ephemeral layer goes away; DNS, certificate and secrets (persistent layer) stay.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to tear down the environment'
+        required: true
+
+# Never build and destroy at the same time
+concurrency:
+  group: environment
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # GitHub OIDC -> AWS (no access keys)
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: "cymbal-bank-org"
+  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
+  TF_WORKSPACE: "cymbal-bank-prod"
+  AWS_REGION: "eu-west-1"
+  CLUSTER_NAME: "cymbal-bank-mesh"
+
+jobs:
+  cleanup:
+    name: "Clean up controller-created resources"
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'destroy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_CLEANUP_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check the cluster exists
+        id: cluster
+        run: |
+          if aws eks describe-cluster --name "$CLUSTER_NAME" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Cluster $CLUSTER_NAME not found: nothing to clean up"
+          fi
+
+      - name: Connect kubectl
+        if: steps.cluster.outputs.exists == 'true'
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
+
+      # Argo CD self-heals: without this it would re-create what we delete below
+      - name: Stop Argo CD reconciling
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          if kubectl -n argocd get statefulset argocd-application-controller >/dev/null 2>&1; then
+            kubectl -n argocd scale statefulset argocd-application-controller --replicas=0
+            kubectl -n argocd wait --for=delete pod -l app.kubernetes.io/name=argocd-application-controller --timeout=120s || true
+          fi
+
+      # The ALB controller deletes each ALB (+ target groups, security groups) before the Ingress disappears
+      - name: Delete Ingresses (removes the ALBs)
+        if: steps.cluster.outputs.exists == 'true'
+        run: kubectl delete ingress --all --all-namespaces --wait=true --timeout=10m
+
+      - name: Record EBS volumes behind PVCs
+        if: steps.cluster.outputs.exists == 'true'
+        id: volumes
+        run: |
+          ids=$(kubectl get pv -o jsonpath='{range .items[?(@.spec.csi.driver=="ebs.csi.aws.com")]}{.spec.csi.volumeHandle}{" "}{end}')
+          echo "ids=${ids}" >> "$GITHUB_OUTPUT"
+          echo "EBS volumes: ${ids:-none}"
+
+      # Deleting the namespaces stops the pods, so the CSI driver detaches the volumes
+      - name: Delete workload namespaces
+        if: steps.cluster.outputs.exists == 'true'
+        run: kubectl delete namespace cymbal-bank monitoring --ignore-not-found --wait=true --timeout=10m
+
+      # gp3 uses reclaimPolicy Retain, so the disks outlive their PVCs: delete them explicitly
+      - name: Delete the EBS volumes
+        if: steps.volumes.outputs.ids != ''
+        env:
+          VOLUME_IDS: ${{ steps.volumes.outputs.ids }}
+        run: |
+          for v in $VOLUME_IDS; do
+            if aws ec2 describe-volumes --volume-ids "$v" >/dev/null 2>&1; then
+              aws ec2 wait volume-available --volume-ids "$v"
+              aws ec2 delete-volume --volume-id "$v"
+              echo "deleted $v"
+            fi
+          done
+
+  destroy:
+    name: "Terraform destroy (ephemeral layer)"
+    needs: cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
+        id: upload
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ./
+
+      - name: Create Destroy Run
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
+        id: destroy-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.upload.outputs.configuration_version_id }}
+          is_destroy: true
+          message: "Destroy via GitHub Actions (${{ github.actor }})"
+
+      - name: Apply Destroy
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
+        with:
+          run: ${{ steps.destroy-run.outputs.run_id }}
+          comment: "Destroy confirmed by ${{ github.actor }}"

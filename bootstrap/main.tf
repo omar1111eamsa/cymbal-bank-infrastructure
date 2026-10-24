@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/tfe"
       version = "~> 0.60"
     }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.0"
+    }
   }
 }
 
@@ -19,12 +23,25 @@ provider "tfe" {
   organization = local.org
 }
 
-locals {
-  org       = "cymbal-bank-org"
-  workspace = "cymbal-bank-prod"
+# Reads GITHUB_TOKEN from the environment (export GITHUB_TOKEN=$(gh auth token))
+provider "github" {
+  owner = local.github_owner
 }
 
-# --- AWS side: trust HCP Terraform, no access keys ---
+locals {
+  org          = "cymbal-bank-org"
+  github_owner = "omar1111eamsa"
+  github_repo  = "cymbal-bank-infrastructure"
+
+  workspaces = {
+    prod       = "cymbal-bank-prod"       # ephemeral: destroyed at the end of each session
+    persistent = "cymbal-bank-persistent" # DNS, certificate, secrets: never destroyed
+  }
+}
+
+# =====================================================================
+# HCP Terraform -> AWS (OIDC, no access keys)
+# =====================================================================
 resource "aws_iam_openid_connect_provider" "hcp_terraform" {
   url            = "https://app.terraform.io"
   client_id_list = ["aws.workload.identity"]
@@ -48,7 +65,10 @@ data "aws_iam_policy_document" "hcp_trust" {
     condition {
       test     = "StringLike"
       variable = "app.terraform.io:sub"
-      values   = ["organization:${local.org}:project:*:workspace:${local.workspace}:run_phase:*"]
+      values = [
+        for ws in values(local.workspaces) :
+        "organization:${local.org}:project:*:workspace:${ws}:run_phase:*"
+      ]
     }
   }
 }
@@ -63,32 +83,61 @@ resource "aws_iam_role_policy_attachment" "hcp_terraform_admin" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-# --- HCP side: the workspace uses that role ---
+# =====================================================================
+# HCP workspaces: both use the role above
+# =====================================================================
 import {
   to = tfe_workspace.prod
-  id = "${local.org}/${local.workspace}"
+  id = "${local.org}/${local.workspaces.prod}"
 }
 
 resource "tfe_workspace" "prod" {
-  name         = local.workspace
+  name         = local.workspaces.prod
   organization = local.org
 }
 
+resource "tfe_workspace" "persistent" {
+  name         = local.workspaces.persistent
+  organization = local.org
+}
+
+locals {
+  workspace_ids = {
+    prod       = tfe_workspace.prod.id
+    persistent = tfe_workspace.persistent.id
+  }
+}
+
 resource "tfe_variable" "aws_provider_auth" {
-  workspace_id = tfe_workspace.prod.id
+  for_each = local.workspace_ids
+
+  workspace_id = each.value
   category     = "env"
   key          = "TFC_AWS_PROVIDER_AUTH"
   value        = "true"
 }
 
 resource "tfe_variable" "aws_run_role_arn" {
-  workspace_id = tfe_workspace.prod.id
+  for_each = local.workspace_ids
+
+  workspace_id = each.value
   category     = "env"
   key          = "TFC_AWS_RUN_ROLE_ARN"
   value        = aws_iam_role.hcp_terraform.arn
 }
 
+# Existing single-workspace variables become the "prod" entry of the maps above
+moved {
+  from = tfe_variable.aws_provider_auth
+  to   = tfe_variable.aws_provider_auth["prod"]
+}
 
+moved {
+  from = tfe_variable.aws_run_role_arn
+  to   = tfe_variable.aws_run_role_arn["prod"]
+}
+
+# Cloudflare token: only the persistent layer manages DNS (least privilege)
 variable "cloudflare_api_token" {
   type      = string
   sensitive = true
@@ -96,10 +145,88 @@ variable "cloudflare_api_token" {
 }
 
 resource "tfe_variable" "cloudflare_api_token" {
-  workspace_id     = tfe_workspace.prod.id
+  workspace_id     = tfe_workspace.persistent.id
   category         = "env"
   key              = "CLOUDFLARE_API_TOKEN"
   sensitive        = true
   value_wo         = var.cloudflare_api_token
   value_wo_version = 1
+}
+
+# =====================================================================
+# GitHub Actions -> AWS (OIDC): used by the destroy workflow to clean up
+# controller-created resources (ALB, EBS volumes) before terraform destroy
+# =====================================================================
+resource "aws_iam_openid_connect_provider" "github" {
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+}
+
+data "aws_iam_policy_document" "github_trust" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    # Only workflows running on main of this repository
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${local.github_owner}/${local.github_repo}:ref:refs/heads/main"]
+    }
+  }
+}
+
+resource "aws_iam_role" "github_cleanup" {
+  name               = "github-actions-cymbal-bank"
+  assume_role_policy = data.aws_iam_policy_document.github_trust.json
+}
+
+data "aws_iam_policy_document" "github_cleanup" {
+  statement {
+    sid       = "FindCluster"
+    actions   = ["eks:DescribeCluster"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "FindVolumes"
+    actions   = ["ec2:DescribeVolumes"]
+    resources = ["*"]
+  }
+
+  # Only volumes created by the EBS CSI driver
+  statement {
+    sid       = "DeleteCsiVolumes"
+    actions   = ["ec2:DeleteVolume"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "github_cleanup" {
+  name   = "destroy-cleanup"
+  role   = aws_iam_role.github_cleanup.id
+  policy = data.aws_iam_policy_document.github_cleanup.json
+}
+
+# The workflow reads the role ARN from a repository variable (no account ID in Git)
+resource "github_actions_variable" "cleanup_role_arn" {
+  repository    = local.github_repo
+  variable_name = "AWS_CLEANUP_ROLE_ARN"
+  value         = aws_iam_role.github_cleanup.arn
 }

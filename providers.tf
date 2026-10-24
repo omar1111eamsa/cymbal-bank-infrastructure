@@ -12,18 +12,16 @@ provider "aws" {
 
 #----------------- this  is for helm
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks_cluster.cluster_name
-}
-
+# Module outputs (not a data source): on a fresh build the cluster does not
+# exist at plan time, so reading it would fail the plan.
 data "aws_eks_cluster_auth" "cluster" {
   name = module.eks_cluster.cluster_name
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+    host                   = module.eks_cluster.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.cluster.token
   }
 }

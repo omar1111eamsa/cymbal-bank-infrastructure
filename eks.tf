@@ -44,5 +44,20 @@ module "eks_cluster" {
         }
       }
     }
+
+    # Destroy workflow: cleans up controller-created resources before terraform destroy
+    # (role created by bootstrap/main.tf)
+    github_cleanup = {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github-actions-cymbal-bank"
+
+      policy_associations = {
+        cluster_admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
   }
 }

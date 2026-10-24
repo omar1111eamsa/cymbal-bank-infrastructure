@@ -1,13 +1,8 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-
-
-resource "aws_secretsmanager_secret" "alertmanager_slack" {
-  name        = "cymbal-bank/monitoring/alertmanager-slack"
-  description = "Slack incoming webhook URL for Alertmanager"
-}
-
+# The secrets themselves live in the persistent layer (persistent/secrets.tf);
+# ESO here only gets read access to cymbal-bank/*.
 module "external_secrets_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 1.12"
