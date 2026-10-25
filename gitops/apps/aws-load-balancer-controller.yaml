@@ -14,7 +14,9 @@ spec:
       values: |
         clusterName: cymbal-bank-mesh
         region: eu-west-1
-        vpcId: vpc-04d0d51d8d0f22f88
+        # Look the VPC up by tag (set in vpc.tf): works in any account and after every rebuild
+        vpcTags:
+          Name: cymbal-bank-vpc
         enableCertManager: true
         replicaCount: 2
         serviceAccount:
