@@ -143,6 +143,16 @@ moved {
 # GitHub Actions -> AWS (OIDC): used by the destroy workflow to clean up
 # controller-created resources (ALB, EBS volumes) before terraform destroy
 # =====================================================================
+# GitHub sends "immutable" subjects with numeric IDs (repo:<owner>@<owner_id>/<repo>@<repo_id>:...):
+# a renamed or re-created repo with the same name can't inherit this trust
+data "github_user" "owner" {
+  username = local.github_owner
+}
+
+data "github_repository" "infra" {
+  full_name = "${local.github_owner}/${local.github_repo}"
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
@@ -167,7 +177,9 @@ data "aws_iam_policy_document" "github_trust" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.github_owner}/${local.github_repo}:ref:refs/heads/main"]
+      values = [
+        "repo:${local.github_owner}@${data.github_user.owner.id}/${local.github_repo}@${data.github_repository.infra.repo_id}:ref:refs/heads/main"
+      ]
     }
   }
 }
