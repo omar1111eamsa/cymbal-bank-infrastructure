@@ -7,9 +7,11 @@ module "core_nodes" {
   cluster_version = module.eks_cluster.cluster_version
   subnet_ids      = module.vpc.private_subnets
 
-  cluster_primary_security_group_id = module.eks_cluster.cluster_primary_security_group_id
-  vpc_security_group_ids            = [module.eks_cluster.node_security_group_id]
-  cluster_service_cidr              = module.eks_cluster.cluster_service_cidr
+  # Only the module's minimal node security group: also attaching the cluster
+  # primary SG (broad access) gives nodes two SGs tagged kubernetes.io/cluster/<name>,
+  # which the AWS Load Balancer Controller rejects ("expected exactly one securityGroup")
+  vpc_security_group_ids = [module.eks_cluster.node_security_group_id]
+  cluster_service_cidr   = module.eks_cluster.cluster_service_cidr
 
   ami_type       = "AL2023_x86_64_STANDARD"
   instance_types = ["m7i-flex.large"]
