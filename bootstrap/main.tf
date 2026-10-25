@@ -137,21 +137,7 @@ moved {
   to   = tfe_variable.aws_run_role_arn["prod"]
 }
 
-# Cloudflare token: only the persistent layer manages DNS (least privilege)
-variable "cloudflare_api_token" {
-  type      = string
-  sensitive = true
-  ephemeral = true
-}
 
-resource "tfe_variable" "cloudflare_api_token" {
-  workspace_id     = tfe_workspace.persistent.id
-  category         = "env"
-  key              = "CLOUDFLARE_API_TOKEN"
-  sensitive        = true
-  value_wo         = var.cloudflare_api_token
-  value_wo_version = 1
-}
 
 # =====================================================================
 # GitHub Actions -> AWS (OIDC): used by the destroy workflow to clean up

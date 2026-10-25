@@ -1,7 +1,7 @@
 
 
 resource "aws_acm_certificate" "bank" {
-  domain_name       = "bank.o.serghini.me"
+  domain_name       = "bank.o.assfah.me"
   validation_method = "DNS"
 
   lifecycle {
@@ -30,7 +30,6 @@ resource "aws_acm_certificate_validation" "bank" {
   validation_record_fqdns = [
     for r in aws_route53_record.bank_cert_validation : r.fqdn
   ]
-  depends_on = [cloudflare_dns_record.o_delegation]
 }
 
 output "bank_certificate_arn" {

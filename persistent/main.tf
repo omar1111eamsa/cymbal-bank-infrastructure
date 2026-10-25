@@ -17,10 +17,6 @@ terraform {
       version = "~> 5.0"
     }
 
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 5.0"
-    }
   }
 
   required_version = ">= 1.8.0"
@@ -39,5 +35,3 @@ provider "aws" {
   }
 }
 
-# Reads CLOUDFLARE_API_TOKEN from the workspace (sensitive variable)
-provider "cloudflare" {}
