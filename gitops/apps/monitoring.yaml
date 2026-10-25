@@ -136,6 +136,15 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
+  # The Grafana chart generates a random admin password on every render
+  # (Argo renders offline, so the chart's lookup can't reuse the existing one):
+  # ignore it, or Argo would show OutOfSync and rotate the password forever
+  ignoreDifferences:
+    - kind: Secret
+      name: kube-prometheus-stack-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true
@@ -150,3 +159,4 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - SkipDryRunOnMissingResource=true
+      - RespectIgnoreDifferences=true
