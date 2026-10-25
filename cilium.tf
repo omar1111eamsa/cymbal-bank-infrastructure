@@ -5,6 +5,9 @@ resource "helm_release" "cilium" {
   version    = "1.20.4"
   namespace  = "kube-system"
 
+  # Installed before any node exists: its pods start once nodes join (nodes.tf)
+  wait = false
+
   values = [yamlencode({
     eni                        = { enabled = true }
     ipam                       = { mode = "eni" }

@@ -14,22 +14,8 @@ module "eks_cluster" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
-  cluster_addons = {
-    eks-pod-identity-agent = {
-      addon_version = "v1.4.1-eksbuild.2"
-    }
-  }
-
-  eks_managed_node_groups = {
-    core_nodes = {
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["m7i-flex.large"]
-
-      min_size     = 2
-      max_size     = 4
-      desired_size = 2
-    }
-  }
+  # Node group (nodes.tf) and add-ons (eks-addons.tf) live outside this module
+  # so they can be ordered after Cilium: control plane -> Cilium -> nodes -> add-ons
 
   access_entries = {
     local_admin = {
