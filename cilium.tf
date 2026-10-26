@@ -15,11 +15,14 @@ resource "helm_release" "cilium" {
     ipam                       = { mode = "eni" }
     egressMasqueradeInterfaces = "en+"
     routingMode                = "native"
-    kubeProxyReplacement       = true
-    k8sServiceHost             = trimprefix(module.eks_cluster.cluster_endpoint, "https://")
-    k8sServicePort             = 443
-    rollOutCiliumPods          = true
-    operator                   = { prometheus = { enabled = true }, rollOutPods = true }
+    # Istio Ambient SNATs kubelet probes to 169.254.7.127 with iptables; BPF host routing
+    # skips iptables, so probe replies are lost. Legacy routing keeps them working.
+    bpf                  = { hostLegacyRouting = true }
+    kubeProxyReplacement = true
+    k8sServiceHost       = trimprefix(module.eks_cluster.cluster_endpoint, "https://")
+    k8sServicePort       = 443
+    rollOutCiliumPods    = true
+    operator             = { prometheus = { enabled = true }, rollOutPods = true }
 
     prometheus = { enabled = true }
     hubble = {
