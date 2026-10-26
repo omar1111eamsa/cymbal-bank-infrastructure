@@ -91,6 +91,14 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": kube-system
+            app.kubernetes.io/name: karpenter
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
 ---
 # 3. Grafana: talks only to Prometheus, Alertmanager and the API server
 apiVersion: "cilium.io/v2"

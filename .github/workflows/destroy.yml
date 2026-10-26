@@ -78,6 +78,18 @@ jobs:
         if: steps.cluster.outputs.exists == 'true'
         run: kubectl delete namespace cymbal-bank monitoring --ignore-not-found --wait=true --timeout=10m
 
+      # Karpenter's nodes are not in Terraform: deleting the NodePools makes Karpenter
+      # drain and terminate them (and its EC2NodeClass removes the instance profile).
+      # Argo is already stopped above, so nothing re-creates them.
+      - name: Remove Karpenter nodes
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          if kubectl get crd nodepools.karpenter.sh >/dev/null 2>&1; then
+            kubectl delete nodepools --all --wait=true --timeout=10m
+            kubectl wait --for=delete nodeclaims --all --timeout=10m || true
+            kubectl delete ec2nodeclasses --all --wait=true --timeout=5m
+          fi
+
       # gp3 uses reclaimPolicy Retain, so the disks outlive their PVCs: delete them explicitly
       - name: Delete the EBS volumes
         if: steps.volumes.outputs.ids != ''
