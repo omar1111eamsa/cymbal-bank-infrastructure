@@ -26,6 +26,12 @@ module "karpenter" {
       sid       = "AllowListOwnInstanceProfiles"
       actions   = ["iam:ListInstanceProfiles"]
       resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/karpenter/${data.aws_region.current.name}/${module.eks_cluster.cluster_name}/*"]
+    },
+    {
+      # Read-only; EC2 Describe* actions can't be scoped to resources
+      sid       = "AllowInstanceStatusHealthChecks"
+      actions   = ["ec2:DescribeInstanceStatus"]
+      resources = ["*"]
     }
   ]
 }

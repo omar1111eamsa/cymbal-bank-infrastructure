@@ -16,15 +16,11 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
+        # AWS Free plan: only Free Tier eligible types can be launched (others fail with
+        # FreeTierIneligible). On a paid plan, widen to instance-category c/m/r, 2-4 vCPU, gen > 5.
+        - key: node.kubernetes.io/instance-type
           operator: In
-          values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-cpu
-          operator: In
-          values: ["2", "4"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]
+          values: ["m7i-flex.large", "c7i-flex.large"]
       # Cilium removes this once its agent runs on the node: no pod starts without networking
       startupTaints:
         - key: node.cilium.io/agent-not-ready
