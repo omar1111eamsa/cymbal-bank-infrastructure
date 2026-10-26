@@ -14,6 +14,11 @@ module "eks_cluster" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
+
+  node_security_group_tags = {
+    "karpenter.sh/discovery" = "cymbal-bank-mesh"
+  }
+
   # Node group (nodes.tf) and add-ons (eks-addons.tf) live outside this module
   # so they can be ordered after Cilium: control plane -> Cilium -> nodes -> add-ons
 
