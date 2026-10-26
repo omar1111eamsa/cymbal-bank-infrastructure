@@ -18,6 +18,16 @@ module "karpenter" {
   node_iam_role_additional_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
+
+  # Karpenter 1.15 lists its own instance profiles (cleanup); the module's built-in policy predates it.
+  # Scoped to Karpenter's path for this cluster only.
+  iam_policy_statements = [
+    {
+      sid       = "AllowListOwnInstanceProfiles"
+      actions   = ["iam:ListInstanceProfiles"]
+      resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/karpenter/${data.aws_region.current.name}/${module.eks_cluster.cluster_name}/*"]
+    }
+  ]
 }
 
 
