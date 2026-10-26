@@ -24,3 +24,7 @@ spec:
         maxDuration: 5m
     syncOptions:
       - CreateNamespace=true
+    # Istio Ambient: every pod in the namespace goes through ztunnel (mTLS)
+    managedNamespaceMetadata:
+      labels:
+        istio.io/dataplane-mode: ambient
