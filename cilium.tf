@@ -10,6 +10,8 @@ resource "helm_release" "cilium" {
 
   values = [yamlencode({
     eni                        = { enabled = true }
+    cni                        = { exclusive = false }
+    socketLB                   = { hostNamespaceOnly = true }
     ipam                       = { mode = "eni" }
     egressMasqueradeInterfaces = "en+"
     routingMode                = "native"
