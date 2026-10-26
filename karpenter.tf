@@ -19,3 +19,46 @@ module "karpenter" {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 }
+
+
+# CRDs as their own release: Helm never upgrades CRDs shipped inside a chart
+resource "helm_release" "karpenter_crd" {
+  name       = "karpenter-crd"
+  repository = "oci://public.ecr.aws/karpenter"
+  chart      = "karpenter-crd"
+  version    = "1.15.1"
+  namespace  = "kube-system"
+
+  depends_on = [module.core_nodes]
+}
+
+resource "helm_release" "karpenter" {
+  name       = "karpenter"
+  repository = "oci://public.ecr.aws/karpenter"
+  chart      = "karpenter"
+  version    = "1.15.1"
+  namespace  = "kube-system"
+  skip_crds  = true
+
+  values = [yamlencode({
+    serviceAccount = { name = module.karpenter.service_account }
+    settings = {
+      clusterName       = module.eks_cluster.cluster_name
+      clusterEndpoint   = module.eks_cluster.cluster_endpoint
+      interruptionQueue = module.karpenter.queue_name
+    }
+    controller = {
+      resources = {
+        requests = { cpu = "100m", memory = "256Mi" }
+        limits   = { memory = "512Mi" }
+      }
+    }
+  })]
+
+  # Needs the Pod Identity agent (AWS credentials) and CoreDNS (to resolve AWS APIs)
+  depends_on = [
+    helm_release.karpenter_crd,
+    aws_eks_addon.pod_identity_agent,
+    aws_eks_addon.coredns,
+  ]
+}
