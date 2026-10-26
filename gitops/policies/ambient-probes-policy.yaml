@@ -1,0 +1,11 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-ambient-hostprobes
+  namespace: cymbal-bank
+spec:
+  description: "Istio Ambient SNATs kubelet health probes to 169.254.7.127; allow them (default-deny namespace)"
+  endpointSelector: {}
+  ingress:
+    - fromCIDR:
+        - 169.254.7.127/32
