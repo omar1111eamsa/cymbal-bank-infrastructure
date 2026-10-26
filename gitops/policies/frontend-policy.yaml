@@ -24,3 +24,6 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+            # Istio Ambient: mesh traffic arrives through the ztunnel HBONE tunnel
+            - port: "15008"
+              protocol: TCP
