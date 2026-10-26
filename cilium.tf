@@ -18,9 +18,10 @@ resource "helm_release" "cilium" {
     kubeProxyReplacement       = true
     k8sServiceHost             = trimprefix(module.eks_cluster.cluster_endpoint, "https://")
     k8sServicePort             = 443
+    rollOutCiliumPods          = true
+    operator                   = { prometheus = { enabled = true }, rollOutPods = true }
 
     prometheus = { enabled = true }
-    operator   = { prometheus = { enabled = true } }
     hubble = {
       relay   = { enabled = true }
       ui      = { enabled = true }
