@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter-nodes
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/omar1111eamsa/cymbal-bank-infrastructure.git"
+    targetRevision: main
+    path: gitops/karpenter
+  destination:
+    server: "https://kubernetes.default.svc"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+    syncOptions:
+      - SkipDryRunOnMissingResource=true

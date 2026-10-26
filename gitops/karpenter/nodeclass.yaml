@@ -1,0 +1,25 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  role: KarpenterNodeRole-cymbal-bank
+  # Pinned AMI version: upgrades happen when you choose (Git), not by surprise
+  amiSelectorTerms:
+    - alias: al2023@v20261023
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: cymbal-bank-mesh
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: cymbal-bank-mesh
+  # IMDSv2 only, and pods can't reach the node's metadata (hop limit 1)
+  metadataOptions:
+    httpTokens: required
+    httpPutResponseHopLimit: 1
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 20Gi
+        volumeType: gp3
+        encrypted: true
