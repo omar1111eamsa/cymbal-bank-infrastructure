@@ -1,0 +1,172 @@
+# Istio Ambient L4 authorization (enforced by ztunnel): who may call whom, by mTLS identity.
+# Complements the Cilium policies (network) with cryptographic identity: defense in depth.
+# Identity = ServiceAccount: cluster.local/ns/<namespace>/sa/<serviceaccount>
+
+# accounts-db: user accounts and contacts
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: accounts-db
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: accounts-db
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/userservice
+              - cluster.local/ns/cymbal-bank/sa/contacts
+      to:
+        - operation:
+            ports: ["5432"]
+---
+# ledger-db: the transaction ledger
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ledger-db
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: ledger-db
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/ledgerwriter
+              - cluster.local/ns/cymbal-bank/sa/balancereader
+              - cluster.local/ns/cymbal-bank/sa/transactionhistory
+      to:
+        - operation:
+            ports: ["5432"]
+---
+# frontend: the ALB (not in the mesh, no identity: matched by public subnet IPs) and the loadgenerator
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: frontend
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            ipBlocks:
+              - 10.0.101.0/24
+              - 10.0.102.0/24
+              - 10.0.103.0/24
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/loadgenerator
+      to:
+        - operation:
+            ports: ["8080"]
+---
+# userservice: login and signup, called by the frontend only
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: userservice
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: userservice
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/frontend
+      to:
+        - operation:
+            ports: ["8080"]
+---
+# contacts: called by the frontend only
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: contacts
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: contacts
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/frontend
+      to:
+        - operation:
+            ports: ["8080"]
+---
+# balancereader: the frontend shows balances, the ledgerwriter checks funds before a transfer
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: balancereader
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: balancereader
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/frontend
+              - cluster.local/ns/cymbal-bank/sa/ledgerwriter
+      to:
+        - operation:
+            ports: ["8080"]
+---
+# transactionhistory: called by the frontend only
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: transactionhistory
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: transactionhistory
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/frontend
+      to:
+        - operation:
+            ports: ["8080"]
+---
+# ledgerwriter: new transactions, called by the frontend only
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ledgerwriter
+  namespace: cymbal-bank
+spec:
+  selector:
+    matchLabels:
+      app: ledgerwriter
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/cymbal-bank/sa/frontend
+      to:
+        - operation:
+            ports: ["8080"]
