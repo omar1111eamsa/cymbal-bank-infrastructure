@@ -1,9 +1,19 @@
+# Nodes have no CNI until Cilium runs; joining after Cilium lets them become
+# Ready (otherwise EKS fails the node group with NodeCreationFailure).
+# The order comes through this value, not a module depends_on: depends_on defers the
+# module's data sources whenever Cilium changes, which made Terraform replace the node
+# role's policy attachments and leave the role with no policies.
+resource "terraform_data" "cilium_ready" {
+  input      = module.eks_cluster.cluster_name
+  depends_on = [helm_release.cilium]
+}
+
 module "core_nodes" {
   source  = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
   version = "~> 20.0"
 
   name            = "core_nodes"
-  cluster_name    = module.eks_cluster.cluster_name
+  cluster_name    = terraform_data.cilium_ready.output
   cluster_version = module.eks_cluster.cluster_version
   subnet_ids      = module.vpc.private_subnets
 
@@ -19,8 +29,4 @@ module "core_nodes" {
   min_size     = 2
   max_size     = 4
   desired_size = 2
-
-  # Nodes have no CNI until Cilium runs; joining after Cilium lets them become
-  # Ready (otherwise EKS fails the node group with NodeCreationFailure)
-  depends_on = [helm_release.cilium]
 }
