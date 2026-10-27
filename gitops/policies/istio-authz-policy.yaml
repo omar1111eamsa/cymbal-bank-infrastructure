@@ -1,3 +1,12 @@
+# Default deny: every pod in the namespace refuses all mesh traffic,
+# unless an ALLOW policy below opens it (zero trust by default)
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: cymbal-bank
+spec: {}
+---
 # Istio Ambient L4 authorization (enforced by ztunnel): who may call whom, by mTLS identity.
 # Complements the Cilium policies (network) with cryptographic identity: defense in depth.
 # Identity = ServiceAccount: cluster.local/ns/<namespace>/sa/<serviceaccount>
