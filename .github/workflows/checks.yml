@@ -12,12 +12,13 @@ permissions:
 
 jobs:
   terraform:
-    name: "Terraform (fmt, validate, tflint)"
+    # Explicit name: the ruleset requires these checks by name, so keep it stable
+    name: "Terraform (${{ matrix.stack }})"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        dir: [".", "persistent", "bootstrap"]
+        stack: [ephemeral, persistent, bootstrap]
     steps:
       - uses: actions/checkout@v4
 
@@ -25,13 +26,13 @@ jobs:
 
       - name: Format
         run: terraform fmt -check -recursive
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.stack }}
 
       - name: Validate
         run: |
           terraform init -backend=false -input=false
           terraform validate
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.stack }}
 
       - uses: terraform-linters/setup-tflint@v4
 
@@ -39,7 +40,7 @@ jobs:
         run: |
           tflint --init
           tflint --format compact
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.stack }}
 
   checkov:
     name: "Checkov (security misconfigurations)"
