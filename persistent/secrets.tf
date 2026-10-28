@@ -1,6 +1,7 @@
 # Values are set once in Secrets Manager (never in Terraform or Git)
 # and survive destroy/rebuild of the ephemeral environment.
 resource "aws_secretsmanager_secret" "alertmanager_slack" {
+  # checkov:skip=CKV2_AWS_57: webhook URL is issued by Slack, can't be rotated by AWS
   name        = "cymbal-bank/monitoring/alertmanager-slack"
   description = "Slack incoming webhook URL for Alertmanager"
   kms_key_id  = aws_kms_key.secrets.arn
@@ -17,6 +18,7 @@ ephemeral "random_password" "accounts_db" {
 }
 
 resource "aws_secretsmanager_secret" "accounts_db" {
+  # checkov:skip=CKV2_AWS_57: Postgres runs in-cluster (no rotation Lambda); rotate by bumping secret_string_wo_version
   name        = "cymbal-bank/app/accounts-db"
   description = "Postgres password for accounts-db"
   kms_key_id  = aws_kms_key.secrets.arn
@@ -34,6 +36,7 @@ ephemeral "random_password" "ledger_db" {
 }
 
 resource "aws_secretsmanager_secret" "ledger_db" {
+  # checkov:skip=CKV2_AWS_57: Postgres runs in-cluster (no rotation Lambda); rotate by bumping secret_string_wo_version
   name        = "cymbal-bank/app/ledger-db"
   description = "Postgres password for ledger-db"
   kms_key_id  = aws_kms_key.secrets.arn
@@ -52,6 +55,7 @@ ephemeral "tls_private_key" "jwt" {
 }
 
 resource "aws_secretsmanager_secret" "jwt" {
+  # checkov:skip=CKV2_AWS_57: rotate by bumping secret_string_wo_version (new key pair)
   name        = "cymbal-bank/app/jwt-key"
   description = "RSA key pair for signing Cymbal Bank JWTs"
   kms_key_id  = aws_kms_key.secrets.arn
