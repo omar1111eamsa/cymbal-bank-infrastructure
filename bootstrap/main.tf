@@ -334,3 +334,41 @@ resource "github_actions_variable" "cleanup_role_arn" {
   variable_name = "AWS_CLEANUP_ROLE_ARN"
   value         = aws_iam_role.github_cleanup.arn
 }
+
+
+
+# main is protected: changes only through a PR whose checks pass
+resource "github_repository_ruleset" "main" {
+  name        = "protect-main"
+  repository  = data.github_repository.infra.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion         = true # no deleting main
+    non_fast_forward = true # no force-push (history can't be rewritten)
+
+    pull_request {
+      required_approving_review_count = 0 # solo project: you can't approve your own PR
+    }
+
+    required_status_checks {
+      strict_required_status_checks_policy = true # branch must be up to date with main
+
+      required_check { context = "Terraform (fmt, validate, tflint) (.)" }
+      required_check { context = "Terraform (fmt, validate, tflint) (persistent)" }
+      required_check { context = "Terraform (fmt, validate, tflint) (bootstrap)" }
+      required_check { context = "Checkov (security misconfigurations)" }
+      required_check { context = "Kubeconform (gitOps manifests)" }
+      required_check { context = "Persistent layer (DNS, certificate, secrets)" }
+      required_check { context = "Environment (VPC, EKS, platform)" }
+    }
+  }
+}
