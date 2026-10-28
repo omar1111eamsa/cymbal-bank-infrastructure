@@ -80,10 +80,6 @@ resource "aws_wafv2_web_acl" "bank" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "waf" {
-  name              = "aws-waf-logs-cymbal-bank"
-  retention_in_days = 30
-}
 
 resource "aws_wafv2_web_acl_logging_configuration" "bank" {
   resource_arn            = aws_wafv2_web_acl.bank.arn
@@ -104,4 +100,15 @@ resource "aws_wafv2_web_acl_logging_configuration" "bank" {
 
 output "waf_web_acl_arn" {
   value = aws_wafv2_web_acl.bank.arn
+}
+
+data "aws_kms_alias" "logs" {
+  name = "alias/cymbal-bank-logs"
+}
+
+resource "aws_cloudwatch_log_group" "waf" {
+  # checkov:skip=CKV_AWS_338: ephemeral layer, deleted on every destroy; 1-year retention would belong in the persistent layer
+  name              = "aws-waf-logs-cymbal-bank"
+  retention_in_days = 30
+  kms_key_id        = data.aws_kms_alias.logs.target_key_arn
 }
