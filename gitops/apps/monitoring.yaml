@@ -70,6 +70,14 @@ spec:
                   app.kubernetes.io/name: karpenter
               endpoints:
                 - port: http-metrics
+            - name: istiod
+              namespaceSelector:
+                matchNames: [istio-system]
+              selector:
+                matchLabels:
+                  app: istiod
+              endpoints:
+                - port: http-monitoring
           additionalPodMonitors:
             - name: cilium-agent
               namespaceSelector:
@@ -87,6 +95,15 @@ spec:
                   io.cilium/app: operator
               podMetricsEndpoints:
                 - port: prometheus
+            - name: ztunnel
+              namespaceSelector:
+                matchNames: [istio-system]
+              selector:
+                matchLabels:
+                  app: ztunnel
+              podMetricsEndpoints:
+                - port: ztunnel-stats
+                  path: /stats/prometheus
 
         alertmanager:
           config:
