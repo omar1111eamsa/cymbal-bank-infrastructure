@@ -9,8 +9,9 @@ resource "terraform_data" "cilium_ready" {
 }
 
 module "core_nodes" {
+  # checkov:skip=CKV_TF_1: registry module, pinned to an exact version (registry sources can't use a commit hash)
   source  = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  version = "~> 20.0"
+  version = "20.37.2"
 
   name            = "core_nodes"
   cluster_name    = terraform_data.cilium_ready.output

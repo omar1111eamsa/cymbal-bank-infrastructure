@@ -1,6 +1,7 @@
 module "karpenter" {
+  # checkov:skip=CKV_TF_1: registry module, pinned to an exact version (registry sources can't use a commit hash)
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 20.0"
+  version = "20.37.2"
 
   cluster_name = module.eks_cluster.cluster_name
 

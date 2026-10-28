@@ -4,8 +4,9 @@ data "aws_region" "current" {}
 # The secrets themselves live in the persistent layer (persistent/secrets.tf);
 # ESO here only gets read access to cymbal-bank/*.
 module "external_secrets_pod_identity" {
+  # checkov:skip=CKV_TF_1: registry module, pinned to an exact version (registry sources can't use a commit hash)
   source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.12"
+  version = "1.12.1"
 
   name                                  = "external-secrets"
   attach_external_secrets_policy        = true

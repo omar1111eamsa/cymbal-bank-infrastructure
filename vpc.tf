@@ -1,6 +1,7 @@
 module "vpc" {
+  # checkov:skip=CKV_TF_1: registry module, pinned to an exact version (registry sources can't use a commit hash)
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+  version = "5.21.0"
 
   name = "cymbal-bank-vpc"
 

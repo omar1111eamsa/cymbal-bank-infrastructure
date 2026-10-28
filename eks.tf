@@ -1,6 +1,7 @@
 module "eks_cluster" {
+  # checkov:skip=CKV_TF_1: registry module, pinned to an exact version (registry sources can't use a commit hash)
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
+  version = "20.37.2"
 
   cluster_name                  = "cymbal-bank-mesh"
   cluster_version               = "1.36"
