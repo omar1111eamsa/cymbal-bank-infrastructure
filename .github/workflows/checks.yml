@@ -40,3 +40,17 @@ jobs:
           tflint --init
           tflint --format compact
         working-directory: ${{ matrix.dir }}
+
+  checkov:
+    name: "Checkov (security miscofiguration)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform,kubernetes
+          quiet: true
+          soft_fail: true
