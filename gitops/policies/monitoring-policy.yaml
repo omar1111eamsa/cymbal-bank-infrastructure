@@ -99,6 +99,15 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            "k8s:io.kubernetes.pod.namespace": istio-system
+      toPorts:
+        - ports:
+            - port: "15014"        # istiod
+              protocol: TCP
+            - port: "15020"        # ztunnel
+              protocol: TCP
 ---
 # 3. Grafana: talks only to Prometheus, Alertmanager and the API server
 apiVersion: "cilium.io/v2"
