@@ -127,11 +127,12 @@ data "aws_iam_policy_document" "hcp_terraform_iam" {
     }
   }
 
-  # Escalation paths: never touch the CI roles, never hand out admin
+  # Escalation paths: never change the CI roles (reading stays allowed: the EKS
+  # module reads the caller's own role), never hand out admin
   statement {
-    sid     = "DenyCiRoles"
-    effect  = "Deny"
-    actions = ["iam:*"]
+    sid         = "DenyCiRoles"
+    effect      = "Deny"
+    not_actions = ["iam:Get*", "iam:List*"]
     resources = [
       aws_iam_role.hcp_terraform.arn,
       aws_iam_role.github_cleanup.arn,
