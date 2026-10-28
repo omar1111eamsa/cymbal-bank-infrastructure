@@ -79,9 +79,86 @@ resource "aws_iam_role" "hcp_terraform" {
   assume_role_policy = data.aws_iam_policy_document.hcp_trust.json
 }
 
-resource "aws_iam_role_policy_attachment" "hcp_terraform_admin" {
+# Least privilege instead of AdministratorAccess:
+# PowerUserAccess (every service except IAM/Organizations) + IAM scoped to this project.
+# Whoever can create IAM roles can become admin, so IAM is limited to resources
+# tagged Project=cymbal-bank (the stacks' default_tags) and escalation paths are denied.
+resource "aws_iam_role_policy_attachment" "hcp_terraform_power_user" {
   role       = aws_iam_role.hcp_terraform.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
+}
+
+data "aws_iam_policy_document" "hcp_terraform_iam" {
+  # checkov:skip=CKV_AWS_356: iam:Get*/List* are read-only; writes below are tag-scoped
+  statement {
+    sid       = "ReadIam"
+    actions   = ["iam:Get*", "iam:List*"]
+    resources = ["*"]
+  }
+
+  # Terraform sends the default_tags with the create call
+  statement {
+    sid       = "CreateTagged"
+    actions   = ["iam:CreateRole", "iam:CreatePolicy", "iam:CreateInstanceProfile", "iam:CreateOpenIDConnectProvider", "iam:TagRole", "iam:TagPolicy", "iam:TagInstanceProfile", "iam:TagOpenIDConnectProvider"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/Project"
+      values   = ["cymbal-bank"]
+    }
+  }
+
+  statement {
+    sid = "ManageTagged"
+    actions = [
+      "iam:DeleteRole", "iam:UpdateRole", "iam:UpdateAssumeRolePolicy", "iam:PassRole",
+      "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:PutRolePolicy", "iam:DeleteRolePolicy",
+      "iam:CreatePolicyVersion", "iam:DeletePolicyVersion", "iam:DeletePolicy",
+      "iam:AddRoleToInstanceProfile", "iam:RemoveRoleFromInstanceProfile", "iam:DeleteInstanceProfile",
+      "iam:UpdateOpenIDConnectProviderThumbprint", "iam:DeleteOpenIDConnectProvider",
+      "iam:TagRole", "iam:TagPolicy", "iam:TagInstanceProfile", "iam:TagOpenIDConnectProvider",
+      "iam:UntagRole", "iam:UntagPolicy", "iam:UntagInstanceProfile", "iam:UntagOpenIDConnectProvider",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Project"
+      values   = ["cymbal-bank"]
+    }
+  }
+
+  # Escalation paths: never touch the CI roles, never hand out admin
+  statement {
+    sid     = "DenyCiRoles"
+    effect  = "Deny"
+    actions = ["iam:*"]
+    resources = [
+      aws_iam_role.hcp_terraform.arn,
+      aws_iam_role.github_cleanup.arn,
+    ]
+  }
+
+  statement {
+    sid       = "DenyAdminPolicies"
+    effect    = "Deny"
+    actions   = ["iam:AttachRolePolicy"]
+    resources = ["*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "iam:PolicyARN"
+      values = [
+        "arn:aws:iam::aws:policy/AdministratorAccess",
+        "arn:aws:iam::aws:policy/IAMFullAccess",
+        "arn:aws:iam::aws:policy/PowerUserAccess",
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "hcp_terraform_iam" {
+  name   = "iam-project-scoped"
+  role   = aws_iam_role.hcp_terraform.id
+  policy = data.aws_iam_policy_document.hcp_terraform_iam.json
 }
 
 # =====================================================================
