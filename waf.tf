@@ -11,6 +11,7 @@ locals {
 }
 
 resource "aws_wafv2_web_acl" "bank" {
+  # checkov:skip=CKV_AWS_192: Log4j is blocked by AWSManagedRulesKnownBadInputsRuleSet (local.waf_managed_rule_groups); Checkov can't read dynamic blocks
   name  = "cymbal-bank-web-acl"
   scope = "REGIONAL"
 
