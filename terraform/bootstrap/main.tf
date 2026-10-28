@@ -362,9 +362,9 @@ resource "github_repository_ruleset" "main" {
     required_status_checks {
       strict_required_status_checks_policy = true # branch must be up to date with main
 
-      required_check { context = "Terraform (fmt, validate, tflint) (.)" }
-      required_check { context = "Terraform (fmt, validate, tflint) (persistent)" }
-      required_check { context = "Terraform (fmt, validate, tflint) (bootstrap)" }
+      required_check { context = "Terraform (ephemeral)" }
+      required_check { context = "Terraform (persistent)" }
+      required_check { context = "Terraform (bootstrap)" }
       required_check { context = "Checkov (security misconfigurations)" }
       required_check { context = "Kubeconform (gitOps manifests)" }
       required_check { context = "Persistent layer (DNS, certificate, secrets)" }

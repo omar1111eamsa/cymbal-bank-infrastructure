@@ -12,7 +12,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
-.terraform.lock.hcl
+# .terraform.lock.hcl is committed: CI, HCP and laptops use the exact same provider versions
 
 # Variable definitions with secrets
 *.tfvars

@@ -117,7 +117,7 @@ jobs:
         id: upload
         with:
           workspace: ${{ env.TF_WORKSPACE }}
-          directory: ./
+          directory: ./terraform/ephemeral
 
       - name: Create Destroy Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
