@@ -15,6 +15,7 @@ jobs:
     name: "Terraform (fmt, validate, tflint)"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         dir: [".", "persistent", "bootstrap"]
     steps:
