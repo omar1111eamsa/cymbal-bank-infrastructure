@@ -13,6 +13,7 @@ module "external_secrets_pod_identity" {
   external_secrets_secrets_manager_arns = ["arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:cymbal-bank/*"]
   external_secrets_ssm_parameter_arns   = []
   external_secrets_create_permission    = false
+  external_secrets_kms_key_arns         = [data.aws_kms_alias.secrets.target_key_arn]
 
   associations = {
     this = {
@@ -21,4 +22,8 @@ module "external_secrets_pod_identity" {
       service_account = "external-secrets"
     }
   }
+}
+
+data "aws_kms_alias" "secrets" {
+  name = "alias/cymbal-bank-secrets"
 }
