@@ -145,7 +145,7 @@ metadata:
   name: alertmanager
   namespace: monitoring
 spec:
-  description: "Alertmanager: Grafana may query it; no egress yet (notifications come later)"
+  description: "Alertmanager: Grafana may query it; egress only to Slack webhooks"
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: alertmanager
