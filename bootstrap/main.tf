@@ -111,7 +111,7 @@ data "aws_iam_policy_document" "hcp_terraform_iam" {
   statement {
     sid = "ManageTagged"
     actions = [
-      "iam:DeleteRole", "iam:UpdateRole", "iam:UpdateAssumeRolePolicy", "iam:PassRole",
+      "iam:DeleteRole", "iam:UpdateRole", "iam:UpdateAssumeRolePolicy",
       "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:PutRolePolicy", "iam:DeleteRolePolicy",
       "iam:CreatePolicyVersion", "iam:DeletePolicyVersion", "iam:DeletePolicy",
       "iam:AddRoleToInstanceProfile", "iam:RemoveRoleFromInstanceProfile", "iam:DeleteInstanceProfile",
@@ -124,6 +124,19 @@ data "aws_iam_policy_document" "hcp_terraform_iam" {
       test     = "StringEquals"
       variable = "aws:ResourceTag/Project"
       values   = ["cymbal-bank"]
+    }
+  }
+
+  # PassRole isn't matched by role tags: scope it by the receiving service instead
+  # (cluster and node group roles to EKS, controller roles to EKS Pod Identity)
+  statement {
+    sid       = "PassRoleToEks"
+    actions   = ["iam:PassRole"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["eks.amazonaws.com", "pods.eks.amazonaws.com"]
     }
   }
 
