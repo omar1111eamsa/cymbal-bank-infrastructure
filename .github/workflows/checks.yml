@@ -37,9 +37,11 @@ jobs:
       - uses: terraform-linters/setup-tflint@v4
 
       - name: TFLint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}   # avoids rate limits when downloading the plugin
         run: |
-          tflint --init
-          tflint --format compact
+          tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          tflint --format compact --config "$GITHUB_WORKSPACE/.tflint.hcl"
         working-directory: terraform/${{ matrix.stack }}
 
   checkov:
