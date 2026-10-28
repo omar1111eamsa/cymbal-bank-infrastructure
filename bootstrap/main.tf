@@ -190,11 +190,14 @@ resource "aws_iam_role" "github_cleanup" {
   assume_role_policy = data.aws_iam_policy_document.github_trust.json
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "github_cleanup" {
+  # checkov:skip=CKV_AWS_356: ec2:DescribeVolumes only supports "*"; DeleteVolume is limited by the CSI tag condition
   statement {
     sid       = "FindCluster"
     actions   = ["eks:DescribeCluster"]
-    resources = ["*"]
+    resources = ["arn:aws:eks:eu-west-1:${data.aws_caller_identity.current.account_id}:cluster/cymbal-bank-mesh"]
   }
 
   statement {
