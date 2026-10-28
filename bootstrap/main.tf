@@ -140,6 +140,17 @@ data "aws_iam_policy_document" "hcp_terraform_iam" {
     }
   }
 
+  # EKS access entries for node roles pass the role without iam:PassedToService:
+  # allow only the node roles, by name
+  statement {
+    sid     = "PassNodeRoles"
+    actions = ["iam:PassRole"]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KarpenterNodeRole-cymbal-bank",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/core_nodes-eks-node-group-*",
+    ]
+  }
+
   # Escalation paths: never change the CI roles (reading stays allowed: the EKS
   # module reads the caller's own role), never hand out admin
   statement {
