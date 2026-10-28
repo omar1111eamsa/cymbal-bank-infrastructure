@@ -1,0 +1,41 @@
+name: "Checks"
+
+# Runs on every PR and push: catch mistakes before anything is applied
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: "Terraform (fmt, validate, tflint)"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [".", "persistent", "bootstrap"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Format
+        run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.dir }}
+
+      - name: Validate
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+        working-directory: ${{ matrix.dir }}
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: TFLint
+        run: |
+          tflint --init
+          tflint --format compact
+        working-directory: ${{ matrix.dir }}
