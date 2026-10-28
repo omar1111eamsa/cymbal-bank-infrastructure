@@ -42,7 +42,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
 
   checkov:
-    name: "Checkov (security miscofiguration)"
+    name: "Checkov (security misconfigurations)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +53,6 @@ jobs:
           directory: .
           framework: terraform,kubernetes
           quiet: true
-          soft_fail: true
   
   kubeconform:
     name: "Kubeconform (gitOps manifests)"
