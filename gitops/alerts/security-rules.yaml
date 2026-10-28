@@ -1,0 +1,64 @@
+# Alerts for our own security layers: Cilium, GitOps, secrets, mesh
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: security-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: zero-trust
+      rules:
+        # Baseline is ~0.3/s: a spike means a broken policy or someone probing
+        - alert: CiliumPolicyDropsHigh
+          expr: sum(rate(hubble_drop_total{reason="POLICY_DENIED"}[10m])) > 2
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cilium is denying {{ $value | humanize }} packets/s"
+            description: "Check with: hubble observe --verdict DROPPED"
+
+        - alert: ZtunnelDown
+          expr: up{job="monitoring/ztunnel"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ztunnel down on {{ $labels.pod }}: no mTLS for pods on that node"
+
+        - alert: IstiodDown
+          expr: up{job="istiod"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "istiod down: no new certificates or config for the mesh"
+
+    - name: gitops
+      rules:
+        - alert: ArgoAppUnhealthy
+          expr: argocd_app_info{health_status!="Healthy"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo app {{ $labels.name }} is {{ $labels.health_status }}"
+
+        # Drift: the cluster no longer matches Git
+        - alert: ArgoAppOutOfSync
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo app {{ $labels.name }} is {{ $labels.sync_status }}"
+
+    - name: secrets
+      rules:
+        - alert: ExternalSecretNotReady
+          expr: externalsecret_status_condition{condition="Ready", status="False"} == 1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Secret {{ $labels.exported_namespace }}/{{ $labels.name }} is not syncing from Secrets Manager"
