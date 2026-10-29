@@ -2,6 +2,25 @@
 
 Zero-trust, cloud-native banking microservices platform deployed on AWS EKS using Terraform, HCP Terraform, Cilium (eBPF), and Istio Ambient Mesh.
 
+## Architecture
+
+![Cymbal Bank on AWS EKS](docs/architecture.png)
+
+1. **Users**: through the WAF and the ALB (TLS 1.3) to the frontend, then the backend services and the two Postgres databases.
+2. **Deploy**: every change is a PR with 7 required checks. HCP Terraform applies the AWS side over OIDC, and Argo CD pulls the cluster side from both repos.
+3. **Secrets**: generated write-only by Terraform, stored in Secrets Manager (KMS), synced into the app namespace by External Secrets.
+4. **Alerts**: Prometheus rules fire, Alertmanager sends them to Slack through the NAT.
+
+## Defense in depth
+
+![Defense in depth](docs/defense-in-depth.png)
+
+## Deep dive: one call through the mesh
+
+![Istio Ambient: same caller, two attempts, two verdicts](docs/ambient-sequence.png)
+
+The diagram sources (`.drawio`) live next to the images in [`docs/`](docs/).
+
 ## Layout
 
 | Path | What | Applied by |
