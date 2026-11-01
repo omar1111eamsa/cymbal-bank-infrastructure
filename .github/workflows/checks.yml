@@ -69,8 +69,10 @@ jobs:
           sudo mv kubeconform /usr/local/bin/
       
       - name: Validate
+        # CRD schemas pinned to a catalog commit: an upstream change on its main
+        # broke this check once (Cilium 1.20.2 schema). Bump the SHA on purpose.
         run: |
           kubeconform -strict -summary \
           -schema-location default \
-          -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+          -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/ea03cc2abb64ddc0a927c1e3d48a3d0abf66a3de/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
           gitops/
