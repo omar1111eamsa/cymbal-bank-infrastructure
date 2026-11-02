@@ -5,6 +5,13 @@ on:
   push:
     branches:
       - main
+    # Only Terraform changes rebuild the environment: a docs or gitops/ commit
+    # must never recreate it (Argo CD pulls gitops/ on its own)
+    paths:
+      - "terraform/persistent/**"
+      - "terraform/ephemeral/**"
+      - ".github/workflows/terraform.yml"
+  # No path filter here: the ruleset requires both plan checks on every PR
   pull_request:
     branches:
       - main
